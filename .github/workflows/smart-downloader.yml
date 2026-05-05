@@ -13,6 +13,9 @@ on:
       safe_mode:
         required: true
         type: string
+      yt_cookies_json_b64:
+        required: false
+        type: string
 permissions:
   contents: write
 jobs:
@@ -30,6 +33,7 @@ jobs:
           URL="${{ github.event.inputs.file_url }}"
           FOLDER="${{ github.event.inputs.folder_name }}"
           SAFE_MODE="${{ github.event.inputs.safe_mode }}"
+          COOKIES_JSON_B64="${{ github.event.inputs.yt_cookies_json_b64 }}"
           COOKIES_B64="${{ secrets.YTDLP_COOKIES_B64 }}"
           COOKIES_RAW="${{ secrets.YTDLP_COOKIES }}"
           IS_YOUTUBE="false"
@@ -43,6 +47,37 @@ jobs:
 
           if [ -n "$COOKIES_B64" ]; then
             printf "%s" "$COOKIES_B64" | base64 -d > yt-cookies.txt
+            YTDLP_COOKIE_ARGS="--cookies yt-cookies.txt"
+          elif [ -n "$COOKIES_JSON_B64" ]; then
+            printf "%s" "$COOKIES_JSON_B64" | base64 -d > yt-cookies.json
+            python3 - <<'PY'
+import json
+
+with open('yt-cookies.json', 'r', encoding='utf-8') as f:
+    cookies = json.load(f)
+
+with open('yt-cookies.txt', 'w', encoding='utf-8') as out:
+    out.write('# Netscape HTTP Cookie File\n')
+    for c in cookies:
+        domain = str(c.get('domain', '')).strip()
+        if not domain: continue
+        path = str(c.get('path', '/'))
+        secure = 'TRUE' if c.get('secure') else 'FALSE'
+        host_only = c.get('hostOnly')
+        include_subdomains = 'FALSE' if host_only else 'TRUE'
+        expires = c.get('expirationDate')
+        if expires is None:
+            expires = 0
+        else:
+            try:
+                expires = int(float(expires))
+            except Exception:
+                expires = 0
+        name = str(c.get('name', ''))
+        value = str(c.get('value', ''))
+        if not name: continue
+        out.write(f'{domain}\t{include_subdomains}\t{path}\t{secure}\t{expires}\t{name}\t{value}\n')
+PY
             YTDLP_COOKIE_ARGS="--cookies yt-cookies.txt"
           elif [ -n "$COOKIES_RAW" ]; then
             printf "%s" "$COOKIES_RAW" > yt-cookies.txt
