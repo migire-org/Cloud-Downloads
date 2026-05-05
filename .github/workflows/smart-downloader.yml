@@ -22,7 +22,6 @@ jobs:
       - uses: actions/checkout@v4
       - name: Process File
         run: |
-          sudo apt-get update && sudo apt-get install -y zip file
           URL="${{ github.event.inputs.file_url }}"
           FOLDER="${{ github.event.inputs.folder_name }}"
           SAFE_MODE="${{ github.event.inputs.safe_mode }}"
