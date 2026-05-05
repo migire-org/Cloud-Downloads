@@ -1,6 +1,7 @@
 name: 'Cloud Leecher Engine'
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  YOUTUBE_COOKIES: ${{ secrets.YOUTUBE_COOKIES }}
 on:
   workflow_dispatch:
     inputs:
@@ -26,14 +27,30 @@ jobs:
           FOLDER="${{ github.event.inputs.folder_name }}"
           SAFE_MODE="${{ github.event.inputs.safe_mode }}"
 
-          RAW_NAME=$(basename "${URL%%\?*}" | sed 's/%20/ /g')
+          CONTENT_TYPE=""
+          if [[ "$URL" == *"youtube.com"* || "$URL" == *"youtu.be"* ]]; then
+            python3 -m pip install --user --upgrade yt-dlp
+            export PATH="$HOME/.local/bin:$PATH"
+            if [ -n "$YOUTUBE_COOKIES" ]; then
+              printf "%s" "$YOUTUBE_COOKIES" > youtube_cookies.txt
+              yt-dlp --no-playlist --merge-output-format mp4 --cookies youtube_cookies.txt -o "temp_download.%(ext)s" "$URL"
+            else
+              yt-dlp --no-playlist --merge-output-format mp4 -o "temp_download.%(ext)s" "$URL"
+            fi
+            DL_FILE=$(ls temp_download.* | head -n 1)
+            if [ -z "$DL_FILE" ]; then echo "yt-dlp did not produce output file"; exit 1; fi
+            mv "$DL_FILE" temp_download
+            RAW_NAME="$DL_FILE"
+          else
+            curl -L --fail --retry 5 -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" --progress-bar -D headers.txt -o "temp_download" "$URL"
+            CONTENT_TYPE=$(grep -i "^content-type:" headers.txt | tail -n 1 | cut -d":" -f2- | tr -d "\r" | xargs)
+            RAW_NAME=$(basename "${URL%%\?*}" | sed 's/%20/ /g')
+          fi
+
           NAME_NO_EXT="${RAW_NAME%.*}"
           URL_EXT="${RAW_NAME##*.}"
           if [ "$URL_EXT" = "$RAW_NAME" ]; then URL_EXT=""; fi
 
-          curl -L --fail --retry 5 -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" --progress-bar -D headers.txt -o "temp_download" "$URL"
-
-          CONTENT_TYPE=$(grep -i "^content-type:" headers.txt | tail -n 1 | cut -d":" -f2- | tr -d "\r" | xargs)
           MIME_TYPE=$(file --mime-type -b temp_download)
           SELECTED_EXT="$URL_EXT"
 
