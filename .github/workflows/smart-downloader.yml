@@ -125,7 +125,7 @@ jobs:
             fi
           }
 
-          download_youtube() {
+          download_ytdlp() {
             echo "Detected YouTube URL"
 
             yt-dlp \
@@ -149,8 +149,8 @@ jobs:
             mv "$DOWNLOADED_FILE" temp_download
           }
 
-          if [[ "$URL" == *"youtube.com"* || "$URL" == *"youtu.be"* ]]; then
-            download_youtube
+          if [[ "$URL" == *"youtube.com"* || "$URL" == *"youtu.be"* || "$URL" == *"pornhub.com"* ]]; then
+            download_ytdlp
           else
             download_direct
           fi
