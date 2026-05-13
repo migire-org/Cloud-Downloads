@@ -494,7 +494,7 @@ jobs:
           if [ "$SAFE_MODE" == "true" ]; then
             FINAL_FILE="$FOLDER.$SELECTED_EXT"
           else
-            if [ -n "$NAME_NO_EXT" ] && [ "$NAME_NO_EXT" != "$RAW_NAME" ]; then
+            if [ -n "$NAME_NO_EXT" ] && [ "$NAME_NO_EXT" != "$RAW_NAME" ] && [ "$NAME_NO_EXT" != "temp_download" ]; then
               FINAL_FILE="$NAME_NO_EXT.$SELECTED_EXT"
             else
               FINAL_FILE="$FOLDER.$SELECTED_EXT"
