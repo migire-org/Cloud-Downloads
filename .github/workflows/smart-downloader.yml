@@ -44,6 +44,13 @@ jobs:
             exit 1
           fi
 
+      - name: Debug cookies file
+        shell: bash
+        run: |
+          echo "----- BEGIN cookies.txt -----"
+          cat cookies.txt
+          echo "----- END cookies.txt -----"
+
       - name: Process File
         shell: bash
         run: |
