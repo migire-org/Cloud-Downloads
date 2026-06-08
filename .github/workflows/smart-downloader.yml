@@ -467,7 +467,11 @@ jobs:
           }
 
           is_ytdlp_supported() {
-            yt-dlp --no-check-certificates --simulate --no-playlist --cookies "cookies.txt" "$URL" >/dev/null 2>&1
+            OUTPUT=$(yt-dlp --no-check-certificates --simulate --no-playlist --cookies "cookies.txt" "$URL" 2>&1)
+            if echo "$OUTPUT" | grep -q "ERROR: Unsupported URL"; then
+              return 1
+            fi
+            return 0
           }
 
           download_ytdlp() {
