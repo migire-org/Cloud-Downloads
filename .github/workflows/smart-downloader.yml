@@ -467,7 +467,7 @@ jobs:
           }
 
           is_ytdlp_supported() {
-            yt-dlp --no-check-certificates --simulate "$URL" >/dev/null 2>&1
+            yt-dlp --no-check-certificates --simulate --no-playlist --cookies "cookies.txt" "$URL" >/dev/null 2>&1
           }
 
           download_ytdlp() {
