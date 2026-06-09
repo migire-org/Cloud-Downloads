@@ -536,7 +536,7 @@ jobs:
 
           mkdir -p "downloads/$FOLDER"
 
-          split -b 90M -d -a 3 "$FOLDER.zip" "downloads/$FOLDER/chunk_"
+          split -b 50M -d -a 3 "$FOLDER.zip" "downloads/$FOLDER/chunk_"
 
           a=1
           for i in downloads/$FOLDER/chunk_*; do
