@@ -479,7 +479,7 @@ jobs:
             fi
             
             # Check if yt-dlp is falling back to generic extractor (direct download indicator)
-            if echo "$OUTPUT" | grep -q "WARNING.*generic.*information extractor|WARNING.*direct video link"; then
+            if echo "$OUTPUT" | grep -qi "generic"; then
               return 1
             fi
             
