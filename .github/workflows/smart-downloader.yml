@@ -463,11 +463,26 @@ jobs:
             fi
           }
 
+          is_direct_download() {
+            if [[ "$URL" =~ .(dmg|zip|rar|7z|tar|gz|bz2|xz|iso|img|exe|msi|apk|ipa|pkg|deb|rpm|bin|dat|jar|aab|xapk|apks|apkm|obb|lz|lzma|lz4|br|z|cpio|arj|cab|udf|vdi|vmdk|a|pdf|rtf|txt|md|log|csv|json|jsonld|yaml|toml|xml|html|css|js|ts|docx|doc|odt|xlsx|xls|ods|pptx|ppt|odp|epub|mobi|mp4|mpeg|mkv|avi|webm|mov|wmv|flv|3gp|ogv|m3u8|mp3|aac|aiff|amr|flac|wav|m4a|ogg|weba|mid|jpg|png|webp|gif|svg|bmp|tiff|ico|heic|heif|avif|ttf|otf|woff|woff2|snap|appimage|lnk|mobileconfig|jardiff|wasm|so|o|pyc|elf|ipsw|xar)(?.*)?$ ]]; then
+              return 0
+            fi
+            return 1
+          }
+
           is_ytdlp_supported() {
             OUTPUT=$(yt-dlp --no-check-certificates --simulate --no-playlist --cookies "cookies.txt" "$URL" 2>&1)
+            
+            # Check if it's an unsupported URL error
             if echo "$OUTPUT" | grep -q "ERROR: Unsupported URL"; then
               return 1
             fi
+            
+            # Check if yt-dlp is falling back to generic extractor (direct download indicator)
+            if echo "$OUTPUT" | grep -q "WARNING.*generic.*information extractor|WARNING.*direct video link"; then
+              return 1
+            fi
+            
             return 0
           }
 
@@ -497,11 +512,11 @@ jobs:
             mv "$DOWNLOADED_FILE" temp_download
           }
 
-          if is_ytdlp_supported; then
-            download_ytdlp
-          else
-            echo "URL is not supported by yt-dlp; using direct download"
+          if is_direct_download || ! is_ytdlp_supported; then
+            echo "URL is a direct download; using curl instead of yt-dlp"
             download_direct
+          else
+            download_ytdlp
           fi
 
           if [ "$SAFE_MODE" == "true" ]; then
